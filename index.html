@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>European Road Trip - Google Form Link Implemented</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+          integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+          crossorigin=""/>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"
+          integrity="sha512-SfTiTlX6kk+qitfevl/7LibUOeJWlt9rbyDn92a1DqWOw9vWG2MFoays0sgObmWazO5BQPiFucnnEAjpAB+/Sw=="
+          crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+    <style>
+        /* --- Base Styles & Variables --- */
+        :root {
+          --bg-color: #FFFFFF;
+          --text-color: #222222;
+          --text-color-secondary: #555555;
+          --accent-color: #1DCD9F; /* Teal */
+          --accent-color-darker: #169976; /* Darker Teal */
+          --border-color: #EEEEEE;
+          --card-bg: #FFFFFF;
+          --card-shadow: rgba(0, 0, 0, 0.06);
+          --card-shadow-hover: rgba(0, 0, 0, 0.12); /* Enhanced hover shadow */
+          --tips-bg-color: #F9F9F9; /* Light grey for alternating sections */
+          --font-primary: 'Poppins', sans-serif;
+          --placeholder-bg: #EEEEEE;
+          --highlight-bg: rgba(29, 205, 159, 0.1); /* Lighter teal highlight */
+          --attribution-bg: rgba(255, 255, 255, 0.7); /* Semi-transparent white */
+        }
+
+        /* Basic Reset and Body Styles */
+        *, *::before, *::after { box-sizing: border-box; }
+        html { scroll-behavior: smooth; } /* Enable smooth scrolling */
+        body {
+          font-family: var(--font-primary); background-color: var(--bg-color);
+          color: var(--text-color); margin: 0; padding: 0; line-height: 1.7;
+          -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
+        }
+        .container {
+          max-width: 1140px; margin-left: auto; margin-right: auto;
+          padding-left: 20px; padding-right: 20px;
+        }
+
+        /* General Link Styling */
+        a { color: var(--accent-color); text-decoration: none; transition: color 0.2s ease; }
+        a:hover { color: var(--accent-color-darker); text-decoration: underline; }
+
+        /* Section Padding */
+        .section-padding {
+            padding-top: 60px;
+            padding-bottom: 60px;
+        }
+
+        /* --- Header --- */
+        .minimal-header {
+          padding: 15px 0; background-color: var(--bg-color);
+          border-bottom: 1px solid var(--border-color); position: sticky; top: 0; z-index: 1000;
+        }
+        .minimal-navbar { display: flex; justify-content: space-between; align-items: center; min-height: 40px; }
+        .minimal-navbar-brand { font-size: 1.3rem; font-weight: 600; color: var(--text-color); text-decoration: none; display: inline-flex; align-items: center;}
+        .minimal-navbar-brand .fa { margin-right: 10px; color: var(--accent-color); font-size: 1em; }
+        .minimal-navbar-brand:hover { opacity: 0.8; text-decoration: none; }
+        .minimal-navbar-brand:hover .fa { color: var(--accent-color-darker); }
+
+
+        /* --- Page Title --- */
+        .page-title-section { padding: 60px 0; text-align: center; border-bottom: 1px solid var(--border-color); }
+        .page-title-section h1 { font-size: 3.5rem; font-weight: 700; color: var(--text-color); margin: 0 0 15px 0; line-height: 1.2; }
+        .page-title-section h1 .highlight { color: var(--accent-color); }
+        .page-title-section .subtitle { font-size: 1.1rem; font-weight: 400; color: var(--text-color-secondary); max-width: 650px; margin: 0 auto; line-height: 1.6; }
+
+        /* --- Map Section --- */
+        .map-section { /* No top border needed after title section */ }
+        .map-section-heading { font-size: 1.8rem; font-weight: 600; color: var(--text-color); text-align: center; margin-bottom: 30px; }
+        #map { width: 100%; height: 550px; border-radius: 8px; border: 1px solid var(--border-color); box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05); background-color: #f0f0f0; }
+        /* Added background for better legibility */
+        .leaflet-control-attribution {
+            background-color: var(--attribution-bg) !important; /* Use important to override Leaflet defaults */
+            padding: 2px 6px;
+            border-radius: 3px;
+            box-shadow: 0 1px 5px rgba(0,0,0,0.2);
+        }
+        .leaflet-control-attribution a {
+            color: #0078A8 !important; /* Ensure link color contrasts with potential background */
+        }
+        .leaflet-control-attribution a:hover { text-decoration: underline; }
+
+        /* --- Country Summary Section --- */
+        #country-summary {
+            text-align: center;
+            margin-top: 30px; /* Space above flags */
+            padding: 15px;
+            background-color: var(--tips-bg-color); /* Subtle background */
+            border-radius: 6px;
+        }
+        #country-summary p {
+            margin: 0 0 10px 0; /* Space below text */
+            font-size: 0.95rem;
+            color: var(--text-color-secondary);
+        }
+        #country-summary .flags-wrapper {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px; /* Space between flags */
+        }
+        #country-summary img.country-flag {
+            width: 28px; /* Small flag size */
+            height: auto;
+            border: 1px solid var(--border-color); /* Subtle border */
+            border-radius: 3px;
+            vertical-align: middle;
+        }
+
+
+        /* --- Section Heading --- */
+        .section-heading {
+            font-size: 2.2rem; font-weight: 600; color: var(--text-color);
+            margin-bottom: 50px; /* Increased margin */
+            text-align: center; border-bottom: none; text-transform: none; padding-bottom: 0;
+        }
+
+        /* --- Destinations Section --- */
+        .destinations-section { border-top: 1px solid var(--border-color); }
+        .minimal-destination-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; }
+        .minimal-card { background-color: var(--card-bg); border-radius: 8px; overflow: hidden; box-shadow: 0 4px 15px var(--card-shadow); transition: transform 0.3s ease, box-shadow 0.3s ease, background-color 0.5s ease; display: flex; flex-direction: column; }
+        .minimal-card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 12px 30px var(--card-shadow-hover); /* Updated hover shadow */
+        }
+        /* Highlight effect for card when map marker is clicked */
+        .minimal-card.highlighted {
+            background-color: var(--highlight-bg); /* Light teal background */
+        }
+
+        .minimal-card__image-wrapper { width: 100%; padding-top: 60%; position: relative; background-color: var(--placeholder-bg); display: flex; align-items: center; justify-content: center; border-bottom: 1px solid var(--border-color); cursor: pointer; }
+        .minimal-card__image { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; display: block; background-color: var(--placeholder-bg); }
+        .minimal-card__image-wrapper .destination-icon { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 4rem; color: var(--accent-color); opacity: 0.65; z-index: 2; pointer-events: none; display: none; }
+        .minimal-card__image:error + .destination-icon { display: inline-block; }
+        .minimal-card__image.loaded + .destination-icon { display: none; }
+
+        .minimal-card__content { padding: 20px 25px 25px 25px; display: flex; flex-direction: column; flex-grow: 1; }
+        .minimal-card__title { font-size: 1.15rem; font-weight: 600; color: var(--text-color); margin: 0 0 12px 0; }
+        .minimal-card__description { font-size: 0.9rem; line-height: 1.6; color: var(--text-color-secondary); margin-bottom: 15px; flex-grow: 1; }
+        .minimal-card__info-group { margin-bottom: 15px; display: flex; flex-direction: column; gap: 8px; }
+        .minimal-card__info { font-size: 0.85rem; color: #666; display: flex; align-items: flex-start; gap: 8px; margin-bottom: 5px; }
+        .minimal-card__info .fa { color: var(--accent-color); font-size: 0.9em; width: 1.1em; text-align: center; flex-shrink: 0; margin-top: 0.2em; }
+        .minimal-card__info-text { flex-grow: 1; }
+        .minimal-card__info .cost-estimate { font-size: 0.8em; color: var(--text-color-secondary); margin-left: 5px; white-space: nowrap; }
+
+        /* Activity List */
+         .minimal-card__activity-heading { margin: 15px 0 5px 0; font-size: 0.9rem; font-weight: 600; color: var(--text-color); border-top: 1px dashed var(--border-color); padding-top: 15px; }
+        .minimal-card__activities-list { list-style: none; padding: 0; margin: 0 0 15px 0; font-size: 0.85rem; color: #666; }
+        .minimal-card__activities-list li { display: flex; align-items: flex-start; padding: 4px 0; }
+        .minimal-card__activities-list .activity-text { margin-right: 10px; flex-grow: 1; }
+
+        /* Learn More Link */
+        .minimal-card__link { display: inline-block; font-size: 0.9rem; font-weight: 600; color: var(--accent-color); text-decoration: none; margin-top: auto; padding: 8px 0; align-self: flex-start; transition: color 0.2s ease; }
+        .minimal-card__link .fa { margin-left: 5px; font-size: 0.8em; transition: transform 0.2s ease; }
+        .minimal-card__link:hover .fa { transform: translateX(3px); }
+        .minimal-card__link:hover { color: var(--accent-color-darker); text-decoration: underline; }
+
+        /* --- Travel Tips Section --- */
+        .travel-tips-section { background-color: var(--section-bg-alt); border-top: 1px solid var(--border-color); }
+        .travel-tips-section .container { max-width: 800px; }
+        .travel-tips-section h3 {
+            font-size: 1.25rem; font-weight: 600; color: var(--accent-color-darker); margin-top: 30px;
+            margin-bottom: 10px; border-bottom: 1px solid var(--border-color); padding-bottom: 5px;
+        }
+        .travel-tips-section h3:first-of-type { margin-top: 0; }
+        .travel-tips-section ul { list-style: disc; margin-left: 20px; padding-left: 10px; color: var(--text-color-secondary); font-size: 0.95rem; line-height: 1.8; }
+         .travel-tips-section li { margin-bottom: 8px; }
+         .travel-tips-section strong { color: var(--text-color); font-weight: 600; }
+
+        /* --- Accommodation Recommendations Section --- */
+        .accommodation-recommendations-section { background-color: var(--bg-color); border-top: 1px solid var(--border-color); }
+        .accommodation-recommendations-section .container { max-width: 800px; }
+         .accommodation-recommendations-section h3 {
+             font-size: 1.25rem; font-weight: 600; color: var(--accent-color-darker); margin-top: 30px; margin-bottom: 15px;
+         }
+         .accommodation-recommendations-section h3:first-of-type { margin-top: 0; }
+         .accommodation-recommendations-section p,
+         .accommodation-recommendations-section li { font-size: 0.95rem; line-height: 1.8; color: var(--text-color-secondary); margin-bottom: 10px; }
+         .accommodation-recommendations-section ul { list-style: disc; margin-left: 20px; padding-left: 10px; margin-top: 0; }
+         .accommodation-recommendations-section strong { color: var(--text-color); font-weight: 600; }
+         .accommodation-recommendations-section .platforms { margin-top: 15px; }
+         .accommodation-recommendations-section .platforms strong { display: block; margin-bottom: 5px; }
+
+        /* --- Cost Estimate Section --- */
+        .cost-estimate-section { background-color: var(--section-bg-alt); border-top: 1px solid var(--border-color); }
+        .cost-estimate-section .container { max-width: 900px; }
+        .cost-disclaimer { font-size: 0.9rem; font-style: italic; color: var(--text-color-secondary); text-align: center; margin-bottom: 40px; border: 1px dashed var(--border-color); padding: 15px; border-radius: 8px; background-color: #fff; }
+        .cost-category { border: 1px solid var(--border-color); border-radius: 8px; padding: 20px 25px; margin-bottom: 25px; background-color: var(--card-bg); }
+        .cost-category h3 { font-size: 1.3rem; font-weight: 600; color: var(--accent-color); margin: 0 0 15px 0; display: flex; align-items: center; }
+         .cost-category h3 .fa { margin-right: 10px; font-size: 0.9em; }
+        .cost-category p { margin-bottom: 8px; font-size: 0.95rem; color: var(--text-color-secondary); }
+        .cost-category p:last-child { margin-bottom: 0; }
+        .cost-category p strong { color: var(--text-color); font-weight: 600; min-width: 160px; display: inline-block; }
+        .cost-summary { margin-top: 40px; padding-top: 25px; border-top: 2px solid var(--accent-color); text-align: center; }
+        .cost-summary p { font-size: 1.1rem; font-weight: 600; margin-bottom: 10px; }
+        .cost-summary p strong { min-width: 180px; display: inline-block; text-align: right; margin-right: 10px; }
+         .cost-summary .total-value { font-size: 1.3rem; color: var(--accent-color-darker); font-weight: 700; }
+         .cost-summary .clarification { font-size: 0.8rem; color: var(--text-color-secondary); margin-top: 5px; font-weight: 400;}
+
+
+        /* --- Voting Section (Using Google Form Link) --- */
+        .voting-section { padding: 50px 0; text-align: center; background-color: var(--bg-color); border-top: 1px solid var(--border-color); }
+        .voting-section .container { max-width: 700px; }
+        .voting-section p { color: var(--text-color-secondary); font-size: 1rem; margin-bottom: 30px; }
+        .vote-button-link { display: inline-block; background-color: var(--accent-color); color: #FFFFFF; padding: 12px 35px; border-radius: 6px; font-weight: 600; font-size: 1.1rem; text-decoration: none; transition: background-color 0.2s ease, transform 0.2s ease; border: none; cursor: pointer; }
+        .vote-button-link:hover { background-color: var(--accent-color-darker); color: #FFFFFF; text-decoration: none; transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+         .vote-button-link .fa { margin-right: 10px; }
+
+        /* --- Footer --- */
+        .footer-section { text-align: center; padding: 40px 0; margin-top: 0; border-top: 1px solid var(--border-color); }
+        .footer-section p { margin: 0; font-size: 0.9rem; color: var(--text-color-secondary); }
+         .footer-section a { color: var(--text-color-secondary); transition: color 0.2s ease; }
+         .footer-section a:hover { color: var(--accent-color); }
+
+        /* --- Responsive Adjustments --- */
+        @media (max-width: 768px) {
+          /* Reduce base padding for sections on mobile */
+          .section-padding { padding-top: 40px; padding-bottom: 40px; }
+
+          .page-title-section h1 { font-size: 2.5rem; }
+          .page-title-section .subtitle { font-size: 1rem; }
+
+          .map-section-heading { font-size: 1.6rem; }
+          #map { height: 400px; }
+
+          .section-heading { font-size: 1.8rem; margin-bottom: 30px;}
+
+          .minimal-destination-grid { gap: 25px; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+          .minimal-card__image-wrapper { padding-top: 55%; }
+          .minimal-card__image-wrapper .destination-icon { font-size: 3.5rem; }
+          .minimal-card__title { font-size: 1.1rem; }
+          .minimal-card__description { font-size: 0.85rem; }
+          .minimal-card__info { font-size: 0.8rem; }
+          .minimal-card__activity-heading { font-size: 0.85rem; }
+          .minimal-card__activities-list { font-size: 0.8rem; }
+
+          .travel-tips-section h3,
+          .accommodation-recommendations-section h3 { font-size: 1.1rem; }
+          .travel-tips-section ul, .travel-tips-section li,
+          .accommodation-recommendations-section p,
+          .accommodation-recommendations-section li { font-size: 0.9rem; }
+
+          .cost-category h3 { font-size: 1.1rem; }
+          .cost-category p { font-size: 0.9rem; }
+          .cost-category p strong { min-width: 110px; }
+          .cost-summary p { font-size: 1rem; }
+          .cost-summary p strong { min-width: 140px; }
+          .cost-summary .total-value { font-size: 1.2rem; }
+
+          .voting-section p { font-size: 0.95rem; }
+          .vote-button-link { font-size: 1rem; padding: 10px 25px; }
+        }
+
+    </style>
+</head>
+<body>
+
+    <header class="minimal-header">
+        <div class="container">
+            <nav class="minimal-navbar">
+                <a class="minimal-navbar-brand" href="#">
+                   <i class="fa fa-road" aria-hidden="true"></i> European Road Trip
+                </a>
+            </nav>
+        </div>
+    </header>
+
+    <section class="page-title-section section-padding">
+        <div class="container">
+            <h1>Explore Europe's <span class="highlight">Scenic Routes</span></h1>
+            <p class="subtitle">
+                A curated route from Romania to the Adriatic.
+            </p>
+        </div>
+    </section>
+
+    <section class="map-section section-padding">
+        <div class="container">
+            <h2 class="map-section-heading">Route Overview</h2>
+            <div id="map"></div>
+            <div id="country-summary"></div>
+        </div>
+    </section>
+
+    <main>
+        <section class="destinations-section section-padding">
+            <div class="container">
+                <h2 class="section-heading">Destinations & Highlights</h2>
+                <div class="minimal-destination-grid">
+                     <div class="loading-message" style="text-align: center; color: var(--text-color-secondary); grid-column: 1 / -1;">Loading destinations...</div>
+                </div>
+            </div>
+        </section>
+
+        <section class="travel-tips-section section-padding">
+            <div class="container">
+                <h2 class="section-heading">Essential Travel Tips</h2>
+                <div>
+                    <h3><i class="fa fa-money" aria-hidden="true"></i> Currency & Payments</h3>
+                    <ul>
+                        <li><strong>Romania (Start):</strong> Romanian Leu (RON). Cards widely accepted in cities, but carry some cash for smaller towns/rural areas.</li>
+                        <li><strong>Austria, Germany, Italy, Slovenia, Croatia (since 2023):</strong> Euro (€). Widely accepted cards (Visa/Mastercard). ATMs readily available. Some smaller cafes/shops might prefer cash.</li>
+                        <li><strong>Liechtenstein, Switzerland:</strong> Swiss Franc (CHF). Cards widely accepted, especially in tourist areas like St. Moritz. Prices are generally higher here.</li>
+                        <li><strong>General:</strong> Inform your bank about your travel dates to avoid blocked cards. Consider a travel-friendly credit/debit card with low foreign transaction fees. Having some Euros in cash is always useful for small purchases or emergencies.</li>
+                    </ul>
+
+                    <h3><i class="fa fa-ticket" aria-hidden="true"></i> Vignettes & Tolls</h3>
+                    <ul>
+                        <li><strong>Vignettes (Required for Motorways):</strong>
+                            <ul>
+                                <li><strong>Austria:</strong> Buy digital or sticker vignette online (ASFINAG website/app) or at border crossings/gas stations *before* entering motorways. 10-day or 2-month options common.</li>
+                                <li><strong>Slovenia:</strong> E-vignette required, buy online in advance (evinjeta.dars.si). Weekly or monthly options.</li>
+                                <li><strong>Switzerland:</strong> Annual sticker vignette required for motorways. Buy at border, gas stations, or post offices. No shorter options usually available.</li>
+                            </ul>
+                        </li>
+                         <li><strong>Tolls (Pay-as-you-go):</strong>
+                            <ul>
+                                <li><strong>Italy:</strong> Most motorways ('autostrade') have toll booths (cash/card). Take ticket on entry, pay on exit.</li>
+                                <li><strong>Croatia:</strong> Similar toll booth system on major motorways.</li>
+                                <li><strong>Specific Roads:</strong> Grossglockner High Alpine Road (Austria) has a significant toll per vehicle (~€40). Some tunnels or passes in Italy/Austria might also have separate tolls.</li>
+                             </ul>
+                         </li>
+                         <li><strong>Recommendation:</strong> Research specific vignette/toll costs for your route using sites like the ADAC (Germany) or ÖAMTC (Austria) route planners, or dedicated vignette sites. Purchase vignettes *before* you need them.</li>
+                    </ul>
+
+                     <h3><i class="fa fa-road" aria-hidden="true"></i> Mountain Roads</h3>
+                     <ul>
+                        <li><strong>Grossglockner:</strong> Check official website for opening dates (usually May-Oct/Nov), current conditions, and toll price. It's a stunning but potentially challenging drive with sharp bends and high altitude. Allow ample time.</li>
+                        <li><strong>Other Alpine Passes (Bernina, Sella, etc.):</strong> Can also have seasonal closures or require specific equipment (winter tires/chains) depending on the time of year and weather. Check local road condition reports (e.g., via apps or ÖAMTC/ADAC/local tourism sites) before driving high passes, especially outside peak summer.</li>
+                        <li><strong>Driving Style:</strong> Use lower gears for descents to save brakes. Be aware of narrower roads and potential for cyclists/motorcyclists.</li>
+                     </ul>
+
+                    <h3><i class="fa fa-car" aria-hidden="true"></i> Driving Regulations & Tips</h3>
+                    <ul>
+                        <li><strong>Speed Limits (General):</strong> Vary significantly. Typically lower in towns (often 50km/h), higher on rural roads (80-100km/h), and highest on motorways (100-130km/h, Germany partially unrestricted). Pay close attention to signs!</li>
+                        <li><strong>Headlights:</strong> Daytime running lights or dipped headlights are mandatory during the day in several countries on the route (e.g., Slovenia, Italy, Croatia, often Austria outside towns). It's safest just to keep them on.</li>
+                        <li><strong>Required Equipment:</strong> Check requirements per country, but generally essential to have: Warning triangle, First-aid kit, High-visibility vest(s) (accessible from *inside* the car for all occupants). Some countries require spare bulbs or specific winter tires seasonally.</li>
+                        <li><strong>Alcohol Limits:</strong> Blood alcohol limits are very strict and often lower than in other parts of the world (e.g., 0.0% for new drivers in some places, 0.5‰ common standard). **Safest approach: Zero alcohol if driving.** Penalties are severe.</li>
+                        <li><strong>Right of Way:</strong> Generally, traffic from the right has priority at unmarked intersections unless signs indicate otherwise. Trams often have priority.</li>
+                        <li><strong>Parking:</strong> Can be difficult and expensive in city centers. Look for designated parking garages ('Parkhaus') or Park+Ride options. Pay attention to parking zone signs (blue zones often require payment/discs).</li>
+                        <li><strong>Emergency Numbers:</strong> 112 is the universal European emergency number.</li>
+                    </ul>
+
+                    <h3><i class="fa fa-id-card-o" aria-hidden="true"></i> Documents</h3>
+                     <ul>
+                        <li>Carry passports/IDs, driver's licenses for all drivers, vehicle registration, and proof of valid car insurance covering all countries visited (check your policy or get a 'Green Card' if needed). An International Driving Permit (IDP) might be recommended or required depending on your license origin - check requirements.</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <section class="accommodation-recommendations-section section-padding">
+            <div class="container">
+                <h2 class="section-heading">Finding Accommodation</h2>
+                <p>For a group of 6 aiming for budget-to-mid-range stays outside main attractions (like cheap hotels with breakfast or Airbnbs), here are some tips and places to look:</p>
+
+                <h3>General Strategy</h3>
+                <ul>
+                    <li><strong>Look Outside Centers:</strong> Search in smaller towns *between* your main destinations or in the suburbs/outskirts of larger cities. Check public transport links or driving times to attractions from these locations.</li>
+                    <li><strong>Use Map Views:</strong> On booking sites, use the map view extensively to find places slightly off the beaten path but still convenient for your route.</li>
+                    <li><strong>Filter Extensively:</strong> Use filters for price range, "breakfast included", accommodation type (hotel, apartment, guesthouse), and required amenities (parking!).</li>
+                    <li><strong>Book Ahead (Especially June):</strong> Mid-June is already busy. Book accommodation as soon as possible, especially for a group of 6, as larger rooms or multiple rooms sell out fast.</li>
+                    <li><strong>Read Recent Reviews:</strong> Pay attention to recent reviews regarding cleanliness, noise, breakfast quality, and ease of access/parking.</li>
+                </ul>
+
+                <h3>Recommended Platforms</h3>
+                 <ul class="platforms">
+                    <li><strong>Booking.com:</strong> Excellent range of hotels, guesthouses, and apartments. Good filtering options and map view.</li>
+                    <li><strong>Airbnb.com:</strong> Ideal for finding larger apartments or houses which can be cost-effective for a group of 6. Often available in residential areas outside tourist centers. Check cleaning fees and house rules.</li>
+                    <li><strong>Hostelworld.com:</strong> While you want to avoid dorms, they also list private rooms in hostels and budget guesthouses which can sometimes be good value.</li>
+                    <li><strong>Direct Booking:</strong> If you find a promising small hotel or guesthouse ('Pension'/'Gasthof' in German/Austrian areas) on an aggregator, check their own website - sometimes direct booking offers slightly better rates or conditions.</li>
+                 </ul>
+
+                <h3>Area-Specific Tips</h3>
+                <ul>
+                    <li><strong>Austria (Salzkammergut):</strong> Look in towns like Strobl, Abersee, Bad Goisern, or even further out like Ebensee for potentially better value than Hallstatt or St. Wolfgang directly.</li>
+                    <li><strong>Austria (Alps):</strong> Consider villages in side valleys near Grossglockner (like Winklern) or Innsbruck (like villages in Stubaital or Wipptal) instead of the main resorts.</li>
+                    <li><strong>Germany (Bavaria):</strong> Explore villages near Füssen (like Schwangau outskirts) or Garmisch rather than staying right in the center.</li>
+                    <li><strong>Switzerland (Engadin):</strong> This area is expensive. Look at Samedan, Celerina, Pontresina, or even further down the valley for potentially lower prices than central St. Moritz.</li>
+                    <li><strong>Italy (Dolomites):</strong> Staying in one valley town (e.g., Ortisei, Canazei, Corvara) as a base is often practical. Smaller villages slightly away from the main ski lifts might offer better deals.</li>
+                    <li><strong>Slovenia (Near Bled):</strong> Check Lake Bohinj area (Stara Fužina, Ribčev Laz) or towns like Radovljica or Lesce for alternatives to staying directly in Bled town.</li>
+                    <li><strong>Croatia (Istria):</strong> Consider inland towns like Pazin or smaller coastal villages outside Pula/Rovinj for potentially cheaper stays.</li>
+                    <li><strong>Croatia (Dalmatia):</strong> Look for 'Apartmani' signs in smaller coastal towns along the Makarska Riviera (between Split & Dubrovnik) or on the Pelješac peninsula (e.g., Orebić). Suburbs of Split and Dubrovnik (like Lapad in Dubrovnik) offer more options than the immediate Old Towns.</li>
+                </ul>
+            </div>
+        </section>
+
+
+        <section class="cost-estimate-section section-padding">
+            <div class="container">
+                <h2 class="section-heading">Estimated Trip Costs (for 6 People)</h2>
+                <p class="cost-disclaimer">
+                    <strong>Disclaimer:</strong> These are highly approximate estimates assuming a ~13-day/12-night trip in mid-June, booked relatively last minute, with a budget-conscious approach (seeking deals on cheap-mid hotels w/ breakfast, mix of supermarket/cheap eats for other meals). Actual costs depend heavily on travel style, specific bookings, fuel prices, and activity choices. Budget carefully! All estimates in Euros (€). Activity costs are per person (pp) where applicable and are rough estimates subject to change.
+                </p>
+                <div class="cost-categories">
+                     <div class="cost-category">
+                        <h3><i class="fa fa-car" aria-hidden="true"></i> Car Rental (6-Person Van)</h3>
+                        <p>Assumes renting a larger vehicle suitable for 6 people + luggage for 13 days, including basic insurance. Prices can be higher when booking closer to June.</p>
+                        <p><strong>Group Total (Est.):</strong> €1,500</p>
+                        <p><strong>Per Person (Est.):</strong> €250</p>
+                    </div>
+                    <div class="cost-category">
+                        <h3><i class="fa fa-tint" aria-hidden="true"></i> Gasoline & Tolls/Vignettes</h3>
+                        <p>Based on ~5000 km distance, 9L/100km consumption, and average fuel prices. Includes estimated costs for vignettes (AT, SI, CH) and tolls (IT, HR, Grossglockner).</p>
+                        <p><strong>Group Total (Est.):</strong> €850</p>
+                        <p><strong>Per Person (Est.):</strong> €145</p>
+                    </div>
+                    <div class="cost-category">
+                        <h3><i class="fa fa-bed" aria-hidden="true"></i> Accommodation (12 Nights)</h3>
+                        <p>Assumes finding deals on cheap to mid-range hotels or guesthouses with breakfast included, often located slightly outside main tourist centers. May require multiple rooms.</p>
+                        <p><strong>Group Total (Est.):</strong> €1,900</p>
+                        <p><strong>Per Person (Est.):</strong> €320</p>
+                    </div>
+                    <div class="cost-category">
+                        <h3><i class="fa fa-cutlery" aria-hidden="true"></i> Food & Drinks</h3>
+                        <p>Based on a budget-conscious mix for lunches, dinners, snacks & drinks: groceries from supermarkets, picnics, street food/to-go options, and occasional meals at inexpensive/mid-range restaurants. (Assumes breakfast is often included with accommodation).</p>
+                        <p><strong>Group Total (Est.):</strong> €2,340</p>
+                        <p><strong>Per Person (Est.):</strong> €390 (~€30/day)</p>
+                    </div>
+                    <div class="cost-category">
+                        <h3><i class="fa fa-ticket" aria-hidden="true"></i> Attractions & Activities</h3>
+                        <p>Covers estimated entrance fees for *some* key attractions (e.g., Plitvice, Neuschwanstein), tolls (Grossglockner), and potentially a few cable cars or boat trips. Assumes balancing paid activities with free exploration.</p>
+                        <p><strong>Group Total (Est.):</strong> €1,950</p>
+                        <p><strong>Per Person (Est.):</strong> €325 (~€25/day)</p>
+                    </div>
+                </div>
+                <div class="cost-summary">
+                     <p><strong>Estimated Grand Total (Group):</strong> <span class="total-value">€8,540</span></p>
+                     <p><strong>Estimated Grand Total (Per Person):</strong> <span class="total-value">€1,425</span></p>
+                     <p class="clarification">(Estimate based on 6 people sharing total costs equally)</p>
+                </div>
+            </div>
+        </section>
+
+         <section class="voting-section section-padding">
+            <div class="container">
+                <h2 class="section-heading">Vote on Destinations!</h2>
+                <p>
+                    Help decide which destinations or key activities we should prioritize! Click the button below to open the voting form. Results will be collected in a shared spreadsheet.
+                </p>
+                <a href="https://docs.google.com/forms/d/e/1FAIpQLSfPKGRvKZlFtBKD21BiR3ULARNJ0dszbTNP7AoldKNVE3yzlw/viewform?usp=header" target="_blank" rel="noopener noreferrer" class="vote-button-link">
+                    <i class="fa fa-check-square-o" aria-hidden="true"></i> Open Voting Form
+                </a>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer-section">
+        <p>&copy; <span id="displayYear"></span> European Road Trip Planner. All Rights Reserved.</p>
+    </footer>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+            integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+            crossorigin=""></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+
+            // --- Destination Data ---
+            const destinations = [
+                 { name: "1. Cluj-Napoca, Romania", coords: [46.77, 23.62], description: "Start in Romania's unofficial Transylvanian capital. Explore its historic squares, baroque architecture, and vibrant student life.", iconClass: "fa fa-university", imageSrc:"images/cluj-napoca.jpg", wikiLink:"https://en.wikipedia.org/wiki/Cluj-Napoca", time: "N/A (Start)", drive: "~9-11h to Bad Ischl", activities: "Visit Piața Unirii & St. Michael's Church (Free), Botanical Garden (~€3 pp)" },
+                 { name: "2. Bad Ischl, Austria", coords: [47.71, 13.62], description: "Historic spa town and former imperial summer residence in the heart of the Salzkammergut.", iconClass: "fa fa-tint", imageSrc:"images/bad-ischl.jpg", wikiLink:"https://en.wikipedia.org/wiki/Bad_Ischl", time: "2-3 hours", drive: "~15m to St. Wolfgang", activities: "Visit Kaiservilla (~€18 pp), Stroll through Kurpark (Free)" },
+                 { name: "3. St. Gilgen/Lake Wolfgang, Austria", coords: [47.76, 13.40], description: "Iconic lake surrounded by mountains. Explore St. Gilgen or St. Wolfgang towns.", iconClass: "fa fa-ship", imageSrc:"images/sankt-gilgen.jpg", wikiLink:"https://en.wikipedia.org/wiki/Wolfgangsee", time: "3-5 hours", drive: "~15m to Schwarzensee", activities: "Schafbergbahn cog railway (~€40 pp), Boat trip on lake (~€10-20 pp), Explore St. Wolfgang/St. Gilgen (Free)" },
+                 { name: "4. Schwarzensee, Austria", coords: [47.73, 13.49], description: "A tranquil, smaller alpine lake perfect for a peaceful walk and enjoying nature's reflections.", iconClass: "fa fa-tint", imageSrc:"images/schwarzensee.jpg", wikiLink:"https://www.wolfgangsee.at/en/active/hiking-nature/lakes-rivers/schwarzensee.html", time: "1-1.5 hours", drive: "~45m to Hallstatt", activities: "Easy hike around the lake (Free), Photography" },
+                 { name: "5. Lake Hallstatt, Austria", coords: [47.56, 13.65], description: "Visit the breathtaking UNESCO village. Wander its narrow streets and soak in the iconic views.", iconClass: "fa fa-camera-retro", imageSrc:"images/hallstatt.jpg", wikiLink:"https://en.wikipedia.org/wiki/Hallst%C3%A4tter_See", time: "3-4 hours", drive: "~1h to Salzburg", activities: "Explore village (Free), Salt Mine tour (~€40 pp), Skywalk viewpoint (~€22 pp via funicular)" },
+                 { name: "6. Salzburg City, Austria", coords: [47.80, 13.04], description: "Birthplace of Mozart, known for its baroque architecture, Hohensalzburg Fortress, and charming old town.", iconClass: "fa fa-music", imageSrc:"images/salzburg.jpg", wikiLink:"https://en.wikipedia.org/wiki/Salzburg", time: "4-8 hours", drive: "~45m to Kehlsteinhaus", activities: "Explore Old Town (Free), Hohensalzburg Fortress (~€14-18 pp), Mirabell Gardens (Free), Mozart's Birthplace (~€12 pp)" },
+                 { name: "7. Kehlsteinhaus (Eagle's Nest), Germany", coords: [47.61, 13.04], description: "Historic Third Reich-era building atop a mountain near Berchtesgaden, offering panoramic views.", iconClass: "fa fa-history", imageSrc:"images/kehlsteinhaus.jpg", wikiLink:"https://en.wikipedia.org/wiki/Kehlsteinhaus", time: "2-3 hours", drive: "~1.5-2h to Gosausee", activities: "Bus & Elevator Ride (~€30 pp, seasonal access, book ahead)" },
+                 { name: "8. Vorderer Gosausee, Austria", coords: [47.53, 13.50], description: "A stunning foreground lake offering arguably the best views of the Dachstein glacier massif.", iconClass: "fa fa-picture-o", imageSrc:"images/gosausee.jpg", wikiLink:"https://en.wikipedia.org/wiki/Gosauseen", time: "1.5-2 hours", drive: "~1.5-2h to Grossglockner Start", activities: "Walk around lake (Free), Gosaukammbahn cable car (~€20 pp)" },
+                 { name: "9. Grossglockner High Alpine Road, Austria", coords: [47.07, 12.75], description: "Drive Austria's highest paved road for unparalleled alpine scenery, glacier views, and wildlife spotting.", iconClass: "fa fa-road", imageSrc:"images/grossglockner.jpg", wikiLink:"https://en.wikipedia.org/wiki/Grossglockner_High_Alpine_Road", time: "3-5 hours", drive: "~30m to Heiligenblut", activities: "Drive road (Toll ~€40 per car), Stop at viewpoints (Edelweißspitze!) (Free), Pasterze Glacier view (Free)" },
+                 { name: "10. Heiligenblut, Austria", coords: [47.04, 12.84], description: "Picturesque village at the southern end of the Grossglockner road, famous for its church spire.", iconClass: "fa fa-home", imageSrc:"images/heiligenblut.jpg", wikiLink:"https://en.wikipedia.org/wiki/Heiligenblut_am_Gro%C3%9Fglockner", time: "0.5-1 hour", drive: "~3-4h to Achensee", activities: "View/Photograph Church (Free)" },
+                 { name: "11. Achensee, Austria", coords: [47.46, 11.71], description: "Tyrol's largest lake, resembling a fjord. Enjoy boat trips or ride a historic steam train.", iconClass: "fa fa-tint", imageSrc:"images/achensee.jpg", wikiLink:"https://en.wikipedia.org/wiki/Achensee", time: "2-3 hours", drive: "~45m to Zillertal", activities: "Achenseebahn steam train (~€30 pp), Rofan or Karwendel cable car (~€25-30 pp)" },
+                 { name: "12. Zillertal, Austria", coords: [47.17, 11.86], description: "A broad, bustling Tyrolean valley famous for year-round activities from hiking to glacier skiing.", iconClass: "fa fa-area-chart", imageSrc:"images/zillertal.jpg", wikiLink:"https://en.wikipedia.org/wiki/Zillertal", time: "2-4 hours", drive: "~45m to Innsbruck", activities: "Hiking trails (Free), Explore Mayrhofen (Free), Hintertux Glacier visit (Varies)" },
+                 { name: "13. Innsbruck, Austria", coords: [47.27, 11.40], description: "Explore the charming Old Town ('Altstadt') of the 'Capital of the Alps', see the Golden Roof and Imperial Palace.", iconClass: "fa fa-building-o", imageSrc:"images/innsbruck.jpg", wikiLink:"https://en.wikipedia.org/wiki/Innsbruck", time: "3-5 hours", drive: "~15m to Swarovski", activities: "Golden Roof (Free exterior), Nordkette cable car (~€40 pp), Ambras Castle (~€12 pp)" },
+                 { name: "14. Swarovski Crystal Worlds (Wattens), Austria", coords: [47.29, 11.60], description:"A unique museum/art installation featuring dazzling crystal creations by Swarovski.", iconClass: "fa fa-diamond", imageSrc:"images/swarovski.jpg", wikiLink:"https://en.wikipedia.org/wiki/Swarovski_Kristallwelten", time: "2-3 hours", drive: "~45m to Alpine Coaster Imst", activities: "Visit Chambers of Wonder (~€23 pp)" },
+                 { name: "15. Alpine Coaster Imst, Austria", coords: [47.26, 10.73], description: "One of the longest alpine coasters in the world, offering a thrilling ride down the mountain.", iconClass: "fa fa-rocket", imageSrc:"images/alpine-coaster.jpg", wikiLink:"https://www.imster-bergbahnen.at/en/summer/alpine-coaster", time: "1-2 hours", drive: "~20m to Ötztal", activities: "Ride the coaster (~€15-20 pp per ride, includes lift)" },
+                 { name: "16. Ötztal, Austria", coords: [46.97, 11.01], description: "Drive through this long valley, perhaps stopping at the impressive Stuibenfall waterfall or the Aqua Dome spa.", iconClass: "fa fa-history", imageSrc:"images/otztal.jpg", wikiLink:"https://en.wikipedia.org/wiki/%C3%96tztal", time: "1-3 hours", drive: "~1h to Garmisch", activities: "Stuibenfall waterfall hike (Free), Aqua Dome spa (~€30+ pp)" },
+                 { name: "17. Garmisch-Partenkirchen, Germany", coords: [47.49, 11.09], description: "Iconic Bavarian town. Take a cable car up the Zugspitze or walk through the dramatic Partnach Gorge.", iconClass: "fa fa-home", imageSrc:"images/garmish.jpg", wikiLink:"https://en.wikipedia.org/wiki/Garmisch-Partenkirchen", time: "1-2 hours", drive: "~10-15m to Eibsee", activities: "Zugspitze/Alpspix viewpoints (~€60+ pp), Partnach Gorge walk (~€8 pp)" },
+                 { name: "18. Eibsee, Germany", coords: [47.46, 10.99], description: "A jewel of the Bavarian Alps. Enjoy an easy, stunning walk around the turquoise lake.", iconClass: "fa fa-tint", imageSrc:"images/eibsee.jpg", wikiLink:"https://en.wikipedia.org/wiki/Eibsee", time: "1.5-2.5 hours", drive: "~1h to Neuschwanstein", activities: "Walk the lake circuit trail (Free), Rent a paddleboat (~€15-20/hr)" },
+                 { name: "19. Neuschwanstein, Germany", coords: [47.56, 10.75], description: "Visit the ultimate fairytale castle. Remember to book tour tickets well in advance online!", iconClass: "fa fa-fort-awesome", imageSrc:"images/neuschwanstein.jpg", wikiLink:"https://en.wikipedia.org/wiki/Neuschwanstein_Castle", time: "3-4 hours", drive: "~20m to Highline179", activities: "Castle tour (~€20 pp), Marienbrücke viewpoint (Free), Visit Hohenschwangau (~€20 pp)" },
+                 { name: "20. Highline179 (Reutte), Austria", coords: [47.47, 10.72], description: "Impressive pedestrian suspension bridge offering panoramic views near the Fern Pass road.", iconClass: "fa fa-link", imageSrc:"images/highline.jpg", wikiLink:"https://www.highline179.tirol/en/", time: "1-1.5 hours", drive: "~2-2.5h to Vaduz", activities: "Walk the bridge (~€8 pp), Visit Ehrenberg Castle ruins (Free/Paid)" },
+                 { name: "21. Vaduz, Liechtenstein", coords: [47.14, 9.52], description: "Make a quick stop in the capital of Liechtenstein. View the Prince's castle from below.", iconClass: "fa fa-university", imageSrc:"images/vaduz.jpg", wikiLink:"https://en.wikipedia.org/wiki/Vaduz", time: "1-1.5 hours", drive: "~2-3h to St. Moritz", activities: "View Vaduz Castle (Free), Visit Kunstmuseum (~€15 pp)" },
+                 { name: "22. St. Moritz, Switzerland", coords: [46.50, 9.84], description: "A luxurious alpine resort known for its chic atmosphere, beautiful lake, and surrounding peaks.", iconClass: "fa fa-snowflake-o", imageSrc:"images/st-moritz.jpeg", wikiLink:"https://en.wikipedia.org/wiki/St._Moritz", time: "1-2 hours", drive: "~1h to Bernina Pass area", activities: "Walk around Lake St. Moritz (Free), Corviglia/Diavolezza/Muottas Muragl cable car (~CHF 40-60+ pp)" },
+                 { name: "23. Bernina Pass Drive, Switzerland", coords: [46.41, 9.99], description: "Drive part of the scenic Bernina Pass route for stunning glacier and mountain lake views.", iconClass: "fa fa-road", imageSrc:"images/bernina.jpg", wikiLink:"https://en.wikipedia.org/wiki/Bernina_Pass", time: "2-3 hours (driving section)", drive: "~3-4h to Seiser Alm", activities: "Scenic Drive & Photo Stops (Free + fuel)" },
+                 { name: "24. Seiser Alm (Alpe di Siusi), Italy", coords: [46.54, 11.61], description: "Explore Europe's largest high alpine meadow by foot or cable car for vast Dolomite views.", iconClass: "fa fa-leaf", imageSrc:"images/seiser-alm.jpg", wikiLink:"https://en.wikipedia.org/wiki/Seiser_Alm", time: "3-5 hours", drive: "~15-30m to Val Gardena", activities: "Hiking across the Alm (Free), Cable car access (~€25 pp)" },
+                 { name: "25. Val Gardena, Italy", coords: [46.57, 11.67], description: "Base yourself in Ortisei, Selva, or St. Christina to explore this core Dolomite valley.", iconClass: "fa fa-area-chart", imageSrc:"images/val-gardena.jpg", wikiLink:"https://en.wikipedia.org/wiki/Val_Gardena", time: "2-4 hours", drive: "Cable car to Seceda", activities: "Explore Ortisei town center (Free), Hiking trails (Free)" },
+                 { name: "26. Seceda, Italy", coords: [46.60, 11.73], description: "Ride the cable car from Ortisei for perhaps the most iconic viewpoint in the Dolomites.", iconClass: "fa fa-picture-o", imageSrc:"images/seceda.jpg", wikiLink:"https://en.wikipedia.org/wiki/Seceda", time: "2.5-4 hours", drive: "~30-45m to Sella Pass", activities: "Seceda Cable Car (~€38 pp), Photography, Hike towards Refugio Firenze" },
+                 { name: "27. Sella Pass, Italy", coords: [46.51, 11.76], description: "Drive the famous Sella Ronda loop or stop at the pass for stunning close-up mountain vistas.", iconClass: "fa fa-road", imageSrc:"images/sella-pass.jpg", wikiLink:"https://en.wikipedia.org/wiki/Sella_Pass", time: "2-3 hours", drive: "~5-10m to Pisciadu", activities: "Drive the pass roads (Free), Short viewpoint hikes (Free)" },
+                 { name: "28. Cascate del Pisciadù, Italy", coords: [46.54, 11.81], description: "A worthwhile quick stop to admire this powerful waterfall near the road on Passo Gardena.", iconClass: "fa fa-tint", imageSrc:"images/pisciadu.jpg", wikiLink:"https://www.altabadia.org/en/poi/pisciadu-waterfalls.html", time: "0.5-1 hour", drive: "~1.5-2h to Braies/Misurina", activities: "View waterfall from road/path (Free)" },
+                 { name: "29. Lake Misurina / Tre Cime di Lavaredo, Italy", coords: [46.58, 12.25], description: "Visit scenic Lake Misurina before driving the toll road towards the iconic Tre Cime peaks for hiking.", iconClass: "fa fa-area-chart", imageSrc:"images/tre-cime.jpg", wikiLink:"https://en.wikipedia.org/wiki/Tre_Cime_di_Lavaredo", time: "4-6 hours (incl. hike)", activities: "Drive Toll Road (~€30/car), Hike Rif. Auronzo loop (~4h, Free), View Lake Misurina (Free)" },
+                 { name: "30. Lago di Braies, Italy", coords: [46.70, 12.08], description: "The 'Pearl of the Dolomites'. Rent a rowboat or walk the lakeside path. Arrive very early!", iconClass: "fa fa-tint", imageSrc:"images/braises.jpg", wikiLink:"https://en.wikipedia.org/wiki/Pragser_Wildsee", time: "1.5-2.5 hours", drive: "~3h to Bled", activities: "Rent iconic rowboat (~€35/boat), Walk around lake trail (Free, parking fee applies)" },
+                 { name: "31. Bled, Slovenia", coords: [46.37, 14.11], description: "Slovenia's fairytale lake. Take a traditional Pletna boat to the island church.", iconClass: "fa fa-tint", imageSrc:"images/bled_.jpg", wikiLink:"https://en.wikipedia.org/wiki/Lake_Bled", time: "Half Day (4-6h)", drive: "~30m to Lake Bohinj", activities: "Pletna boat to island (~€18 pp), Visit Bled Castle (~€17 pp), Walk Vintgar Gorge (~€10 pp, nearby)" },
+                 { name: "32. Lake Bohinj, Slovenia", coords: [46.28, 13.88], description: "Bled's larger, wilder neighbor offering stunning mountain scenery and hiking.", iconClass: "fa fa-picture-o", imageSrc:"images/bohinj.jpg", wikiLink:"https://en.wikipedia.org/wiki/Lake_Bohinj", time: "2-4 hours", drive: "~2.5-3h to Pula", activities: "Walk lakeside trails (Free), Savica Waterfall visit (~€4 pp), Vogel cable car (~€28 pp)" },
+                 { name: "33. Pula, Croatia", coords: [44.87, 13.85], description: "Explore Istria's largest city, dominated by its magnificent Roman amphitheater.", iconClass: "fa fa-university", imageSrc:"images/pula.jpg", wikiLink:"https://en.wikipedia.org/wiki/Pula", time: "2-3 hours", drive: "~45m-1h to Rovinj/Motovun", activities: "Visit Pula Arena (~€15 pp), Explore Kamenjak Park coves & beaches (Park fee ~€15/car)" },
+                 { name: "34. Rovinj, Croatia", coords: [45.08, 13.64], description: "One of Croatia's most picturesque towns. Get lost in the old town lanes and climb the church tower.", iconClass: "fa fa-anchor", imageSrc:"images/rovinj.jpg", wikiLink:"https://en.wikipedia.org/wiki/Rovinj", time: "2.5-4 hours", drive: "~1h to Motovun", activities: "Climb St. Euphemia tower (~€4 pp), Swim at Lone Bay or Mulini Beach (Free)" },
+                 { name: "35. Motovun, Croatia", coords: [45.34, 13.83], description: "Charming Istrian hill town famous for truffles and stunning views over the Mirna valley.", iconClass: "fa fa-home", imageSrc:"images/motovun.jpg", wikiLink:"https://en.wikipedia.org/wiki/Motovun", time: "1.5-2.5 hours", drive: "~2.5-3h to Plitvice", activities: "Walk the town walls (~€5 pp), Explore town & enjoy views (Free), Truffle tasting (Varies)" },
+                 { name: "36. Plitvice Lakes, Croatia", coords: [44.90, 15.61], description: "A natural wonder. Follow the boardwalks across turquoise lakes and past countless waterfalls.", iconClass: "fa fa-tree", imageSrc:"images/plitvice.jpeg", wikiLink:"https://en.wikipedia.org/wiki/Plitvice_Lakes_National_Park", time: "Half Day (4-6h walk)", drive: "~2.5-3h to Split", activities: "Walk Upper/Lower Lakes routes (Entry ~€40 pp high season), Electric boat ride (Included)" },
+                 { name: "37. Split, Croatia", coords: [43.51, 16.44], description: "A vibrant coastal city where ancient Roman history meets modern life within Diocletian's Palace.", iconClass: "fa fa-building-o", imageSrc:"images/split.jpg", wikiLink:"https://en.wikipedia.org/wiki/Split,_Croatia", time: "Half Day (4-6h)", drive: "~1h to Ston (via motorway)", activities: "Explore Diocletian's Palace (Free exterior, basement ~€10 pp), Stroll the Riva promenade (Free), Visit Bačvice beach (Free)" },
+                 { name: "38. Ston & Mali Ston, Croatia", coords: [42.84, 17.70], description: "Known for its impressive defensive walls (Europe's longest) and delicious oysters.", iconClass: "fa fa-fort-awesome", imageSrc:"images/ston.jpg", wikiLink:"https://en.wikipedia.org/wiki/Ston", time: "1.5-2.5 hours", drive: "~1h to Dubrovnik", activities: "Walk part of the Walls of Ston (~€10 pp), Oyster tasting (Varies)" },
+                 { name: "39. Dubrovnik, Croatia", coords: [42.65, 18.09], description: "Iconic walled city. Walk the complete circuit of the walls for unforgettable Adriatic views.", iconClass: "fa fa-flag-checkered", imageSrc:"images/dubrovnik.jpg", wikiLink:"https://en.wikipedia.org/wiki/Dubrovnik", time: "Full Day (6-8h)", drive: "~12-15h+ (Return to Cluj)", activities: "Walk the City Walls (~€35 pp), Ride the Cable Car (~€27 pp), Visit Banje Beach (Free) or Lokrum Island (~€27 pp ferry/entry)" }
+            ];
+
+
+            // --- Initialize Map ---
+            const map = L.map('map', { scrollWheelZoom: true });
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { // Use Standard OSM tiles
+                maxZoom: 19, // Standard OSM max zoom
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(map);
+
+            // --- Map Styles ---
+            const accentColor = getComputedStyle(document.documentElement).getPropertyValue('--accent-color').trim() || '#1DCD9F';
+            const textColor = getComputedStyle(document.documentElement).getPropertyValue('--text-color').trim() || '#222222';
+            const defaultMarkerStyle = { radius: 6, fillColor: textColor, color: "#FFFFFF", weight: 1, opacity: 1, fillOpacity: 0.7 }; // Increased radius
+            const startEndMarkerStyle = { ...defaultMarkerStyle, fillColor: accentColor, radius: 8, fillOpacity: 0.9 }; // Increased radius
+            const routeLineStyle = { color: accentColor, weight: 4, opacity: 0.85 };
+
+            // --- Plot Route and Markers ---
+            const latLngs = [];
+            const markers = {};
+            destinations.forEach((dest, index) => {
+                let style = defaultMarkerStyle;
+                if (index === 0 || index === destinations.length - 1) style = startEndMarkerStyle;
+                const marker = L.circleMarker(dest.coords, style).addTo(map).bindPopup(`<b>${dest.name}</b>`);
+
+                // Store reference to card element based on coords for click interaction
+                marker.cardId = `card-${dest.coords[0]}-${dest.coords[1]}`; // Create a unique ID for the card
+
+                // Add click listener to marker
+                marker.on('click', function(e) {
+                    const targetCardId = e.target.cardId;
+                    const cardElement = document.getElementById(targetCardId);
+
+                    if (cardElement) {
+                        // Scroll to the card
+                        cardElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+                        // Add temporary highlight
+                        cardElement.classList.add('highlighted');
+                        setTimeout(() => {
+                            cardElement.classList.remove('highlighted');
+                        }, 2500); // Remove highlight after 2.5 seconds
+                    }
+                });
+
+                markers[dest.coords.join(',')] = marker;
+                latLngs.push(dest.coords);
+            });
+
+            // --- Draw Polyline and Fit Bounds ---
+            if (latLngs.length > 1) {
+                const polyline = L.polyline(latLngs, routeLineStyle).addTo(map);
+                map.fitBounds(polyline.getBounds(), { padding: [50, 50] });
+            } else if (latLngs.length === 1) {
+                map.setView(latLngs[0], 10);
+            }
+            L.control.scale({ imperial: false }).addTo(map);
+
+            // --- Calculate and Display Country Summary ---
+            const countrySummaryDiv = document.getElementById('country-summary');
+            if (countrySummaryDiv) {
+                const countryIsoMap = { // Mapping from name in destination string to ISO code
+                    'Austria': 'AT',
+                    'Germany': 'DE',
+                    'Liechtenstein': 'LI',
+                    'Switzerland': 'CH',
+                    'Italy': 'IT',
+                    'Slovenia': 'SI',
+                    'Croatia': 'HR'
+                    // Add more mappings if needed
+                };
+
+                const visitedCountries = new Set();
+                // Start from index 1 to exclude Romania
+                for (let i = 1; i < destinations.length; i++) {
+                    const parts = destinations[i].name.split(',');
+                    if (parts.length > 1) {
+                        const countryName = parts[parts.length - 1].trim();
+                        if (countryIsoMap[countryName]) {
+                            visitedCountries.add(countryName);
+                        }
+                    }
+                }
+
+                const uniqueCountries = Array.from(visitedCountries);
+                const countryCount = uniqueCountries.length;
+                let flagsHtml = '';
+
+                uniqueCountries.forEach(countryName => {
+                    const isoCode = countryIsoMap[countryName];
+                    if (isoCode) {
+                        flagsHtml += `<img src="https://flagsapi.com/${isoCode}/flat/32.png" alt="${countryName} flag" title="${countryName}" class="country-flag"> `;
+                    }
+                });
+
+                countrySummaryDiv.innerHTML = `
+                    <p>This route passes through <strong>${countryCount}</strong> countries (after Romania):</p>
+                    <div class="flags-wrapper">${flagsHtml.trim()}</div>
+                `;
+            }
+
+
+            // --- Dynamically Generate Destination Cards ---
+            const gridContainer = document.querySelector('.minimal-destination-grid');
+            const loadingMessage = document.querySelector('.loading-message');
+
+            if (gridContainer) { // Check if grid container exists
+                if(loadingMessage) loadingMessage.remove(); // Remove loading message
+
+                destinations.forEach(dest => {
+                    const card = document.createElement('div');
+                    card.className = 'minimal-card';
+                    // Assign the unique ID for map interaction
+                    card.id = `card-${dest.coords[0]}-${dest.coords[1]}`;
+                    card.dataset.lat = dest.coords[0]; // Keep lat/lng data if needed elsewhere
+                    card.dataset.lng = dest.coords[1];
+                    const altText = `Image of ${dest.name.substring(dest.name.indexOf('.') + 1).trim()}`;
+
+                    // Build Activities HTML (simple list, no buttons)
+                    let activitiesHtml = '<ul class="minimal-card__activities-list">';
+                    if (dest.activities && Array.isArray(dest.activities)) {
+                         // Handle activities as array of objects
+                        dest.activities.forEach(activity => {
+                            activitiesHtml += `
+                                <li>
+                                    <span class="activity-text">${activity.text} ${activity.cost ? `<span class="cost-estimate">${activity.cost}</span>` : ''}</span>
+                                </li>`;
+                        });
+                    } else if (typeof dest.activities === 'string') {
+                         // Handle activities as simple string (fallback)
+                         activitiesHtml += `<li><span class="activity-text">${dest.activities}</span></li>`;
+                    }
+                    activitiesHtml += '</ul>';
+
+
+                    // Build Info HTML (Time, Drive)
+                    let infoHtml = '';
+                    if (dest.time) infoHtml += `<span class="minimal-card__info"><i class="fa fa-clock-o" aria-hidden="true"></i> <span class="minimal-card__info-text">${dest.time}</span></span>`;
+                    if (dest.drive) infoHtml += `<span class="minimal-card__info"><i class="fa fa-car" aria-hidden="true"></i> <span class="minimal-card__info-text">${dest.drive}</span></span>`;
+
+                    // Build Learn More Link HTML
+                    let linkHtml = '';
+                    if (dest.wikiLink) linkHtml = `<a href="${dest.wikiLink}" target="_blank" rel="noopener noreferrer" class="minimal-card__link">Learn More <i class="fa fa-arrow-right" aria-hidden="true"></i></a>`;
+
+                    const imageUrl = dest.imageSrc || `https://placehold.co/600x400/EFEFEF/AAAAAA?text=Missing+Image+Data`;
+                    const iconClass = dest.iconClass || 'fa fa-map-marker';
+
+                    card.innerHTML = `
+                        <div class="minimal-card__image-wrapper" title="Click to zoom map">
+                          <img src="${imageUrl}" alt="${altText}" class="minimal-card__image" loading="lazy"
+                               onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-block';"
+                               onload="this.classList.add('loaded');">
+                          <span class="destination-icon" style="display: none;"> <i class="${iconClass}" aria-hidden="true"></i>
+                          </span>
+                        </div>
+                        <div class="minimal-card__content">
+                          <h4 class="minimal-card__title">
+                            ${dest.name}
+                          </h4>
+                          <p class="minimal-card__description">${dest.description || ''}</p>
+                          <div class="minimal-card__info-group">
+                            ${infoHtml}
+                          </div>
+                          <h5 class="minimal-card__activity-heading">Suggested Activities:</h5>
+                          ${activitiesHtml}
+                          ${linkHtml}
+                        </div>
+                    `;
+
+                    // Add click listener for map zoom (on image wrapper)
+                    const imageWrapper = card.querySelector('.minimal-card__image-wrapper');
+                    if (imageWrapper) { // Check if wrapper exists
+                        imageWrapper.addEventListener('click', function(event) {
+                            if (event.target.closest('.minimal-card__link')) return;
+                            const lat = parseFloat(card.dataset.lat);
+                            const lng = parseFloat(card.dataset.lng);
+                            const key = [lat, lng].join(',');
+                            if (markers[key]) {
+                                const targetMarker = markers[key];
+                                map.flyTo(targetMarker.getLatLng(), 14, { animate: true, duration: 1 });
+                                setTimeout(() => { targetMarker.openPopup(); }, 800); // Open popup after zoom
+                            }
+                        });
+                    }
+                    gridContainer.appendChild(card);
+
+                });
+            } // End if(gridContainer)
+
+            // --- Update Footer Year ---
+            const yearSpan = document.getElementById('displayYear');
+            if (yearSpan) { // Check if span exists
+                yearSpan.textContent = new Date().getFullYear();
+            }
+
+        }); // End DOMContentLoaded
+    </script>
+
+</body>
+</html>
